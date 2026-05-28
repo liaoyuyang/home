@@ -1,69 +1,110 @@
 ---
 name: push-code
-description: 自动将本地 git 仓库代码推送到 GitHub。当用户说"推送一下代码"、"push 代码"、"提交代码"、"git push"、"同步到 GitHub"、"备份代码"时触发。支持 strategy_PAMY_dev（dev 环境）和 online/dce农（实盘环境）两个仓库。
+description: 管理 /home 目录的 Git 代码仓库。当用户说"推送一下代码"、"push 代码"、"提交代码"、"git push"、"同步到 GitHub"、"备份代码"时触发推送；当用户说"版本管理"、"查看历史"、"回退代码"、"diff"、"对比版本"、"tag"、"打标签"时触发版本管理操作。仓库路径为 /home，remote 为 git@github.com:liaoyuyang/home.git。
 ---
 
-# Push Code
+# Push Code & Version Control
 
-用户的两个核心仓库：
+用户的工作目录 `/home` 已配置为 git 仓库：
+- **Local path**: `/home`
+- **Remote**: `git@github.com:liaoyuyang/home.git`
+- **Branch**: `main`
+- **Git config**: `user.name=liaoyuyang`, `user.email=948142104@qq.com`
 
-| 目录 | 用途 | GitHub remote |
-|---|---|---|
-| `/home/strategy_PAMY_dev/` | dev/test 环境、因子核对开发 | `git@github.com:liaoyuyang/home.git` |
-| `/home/online/dce农/` | 实盘运行环境 | 需用户创建第二个仓库（如 `dce-strategy-online`） |
+`.gitignore` 已排除数据文件、日志、缓存和大目录，不会被推送。
 
-> 注意：`user.email` 已设为 `948142104@qq.com`，`user.name` 为 `liaoyuyang`。SSH key 已配置。
+---
 
-## 工作流程
+## 第一部分：推送代码
 
-### 1. 确定目标仓库
-
-根据用户话语判断：
-- 提到 "online"、"prod"、"实盘"、"dce农" → `/home/online/dce农/`
-- 提到 "dev"、"test"、"strategy_PAMY_dev"、"开发环境" → `/home/strategy_PAMY_dev/`
-- **未指定 → 先执行 `git status` 查看两个仓库是否有改动，把有改动的列出来让用户确认，或两个都推**
-
-### 2. 检查并推送
-
-进入目录后执行：
+当用户要求推送时，执行：
 
 ```bash
-cd <仓库目录>
+cd /home
 git status --short
 ```
 
-- **有未提交的改动**（`git status --short` 有输出）：
-  1. 自动生成提交信息。优先从用户最近对话中提取改动摘要；如果提取不到，用简短的默认信息如 `update: 同步代码修改`
-  2. 执行：
-     ```bash
-     git add .
-     git commit -m "<提交信息>"
-     git push
-     ```
+### 有未提交的改动
 
-- **无未提交改动，但 ahead of remote**：
-  - 直接执行 `git push`
+1. 自动生成提交信息（默认 `update: 同步代码修改`，用户明确给了就用用户的）
+2. 执行：
+   ```bash
+   git add .
+   git commit -m "<提交信息>"
+   git push
+   ```
 
-- **无任何改动且已同步**：
-  - 告诉用户"当前没有需要推送的改动"
+### 无改动但 ahead of remote
 
-### 3. online 仓库未配置 remote 的处理
+直接 `git push`。
 
-如果 `/home/online/dce农/` 还没有 remote（首次推送），提示用户：
-> "online 代码还没有 GitHub 仓库。请去 github.com 新建一个仓库（建议取名 `dce-strategy-online`），不要勾选 README。建好后告诉我，我帮你推送。"
+### 已同步
 
-用户告知仓库名后，执行：
+告诉用户"当前没有需要推送的改动"。
+
+---
+
+## 第二部分：版本管理
+
+当用户询问版本管理相关操作时，在 `/home` 下执行对应命令。
+
+### 查看历史
+
 ```bash
-cd /home/online/dce农
-git remote add origin git@github.com:liaoyuyang/<仓库名>.git
-git branch -M main
-git push -u origin main
+git log --oneline -20          # 最近20次提交
 ```
+
+### 查看某次提交改了什么
+
+```bash
+git show <commit编号>
+```
+
+### 对比版本（diff）
+
+```bash
+git diff HEAD~1                # 对比现在和上一次提交
+git diff HEAD~3                # 对比现在和往前第3次
+git diff <commit编号>          # 对比现在和某次特定提交
+```
+
+### 回退/撤销
+
+**仅查看旧版本（不修改）：**
+```bash
+git checkout <commit编号>
+git checkout main              # 看完回到最新
+```
+
+**彻底回退到上一次提交（丢弃当前未提交的改动）：**
+```bash
+git reset --hard HEAD~1
+```
+
+**撤销某次旧提交（保留后续提交，生成反向提交）：**
+```bash
+git revert <commit编号>
+git push
+```
+
+### 打标签（标记重要节点）
+
+```bash
+git tag -a <标签名> -m "<说明>"
+git push origin <标签名>
+```
+
+例如训练好新模型后：
+```bash
+git tag -a v20260528 -m "模型更新：全品种重新训练"
+git push origin v20260528
+```
+
+---
 
 ## 提交信息规范
 
-- 修复 bug：`fix: 修复 xxx`
-- 新增功能/模块：`feat: 新增 xxx`
-- 配置调整：`config: 调整 xxx`
-- 文档/日报更新：`docs: 更新 xxx`
-- 不清楚具体改动了什么：`update: 同步代码修改`
+- 默认：`update: 同步代码修改`
+- 代码改动：`update: 摘要` / `fix: 修复 xxx` / `feat: 新增 xxx`
+- 配置改动：`config: 调整 xxx`
+- 文档改动：`docs: 更新 xxx`
