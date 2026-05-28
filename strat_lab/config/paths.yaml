@@ -1,0 +1,29 @@
+# 路径配置 — 换机器时只需改此处
+
+# 大数据（mnt 侧，可能因机器不同而改变路径）
+mnt:
+  root: /mnt/Data/writable/liaoyuyang
+  future_raw: /mnt/Data/future                    # 原始交易所 decode_csv
+  level2_all: /mnt/Data/writable/liaoyuyang/data/level2_all
+  data_1min: /mnt/Data/writable/liaoyuyang/data/1min
+  data_1day: /mnt/Data/writable/liaoyuyang/data/1day
+  data_1min_active: /mnt/Data/writable/liaoyuyang/data/1min/active
+  future_info: /mnt/Data/writable/liaoyuyang/data/future_info
+  factor_root: /mnt/Data/writable/liaoyuyang/factor
+  model_root: /mnt/Data/writable/liaoyuyang/model/lightgbm/KFoldModel/models
+  backtest_config: /mnt/Data/writable/liaoyuyang/backtest/backtest_config.json
+
+# 本地数据（项目侧，随文件夹迁移）
+local:
+  root: ./data
+  raw: ./data/raw                                  # 同步的主力合约 1min + 合约表
+  processed: ./data/processed                     # 单品种因子（可选本地重算）
+  groups: ./data/groups                           # 按分组隔离的产物
+  logs: ./logs
+
+# 模型与结果路径模板（在 group 子目录下）
+group_templates:
+  all_factor: "{group_root}/all_factor"
+  models: "{group_root}/models"
+  predictions: "{group_root}/predictions"
+  backtest: "{group_root}/backtest"

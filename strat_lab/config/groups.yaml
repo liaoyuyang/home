@@ -1,0 +1,26 @@
+# 品种分组定义
+# 同一品种可属于多个分组，单品种因子复用，跨品种因子按分组隔离
+
+groups:
+  油脂油粕:
+    symbols:
+      - A
+      - M
+      - Y
+      - P
+    description: "油脂油料与豆粕相关品种"
+    # 跨品种因子计算脚本（相对项目根目录）
+    cross_factor_script: pipeline/cross_factors/油脂油粕.py
+
+  农产品:
+    symbols:
+      - A
+      - B
+      - C
+      - CS
+      - M
+      - Y
+      - P
+      - LH
+    description: "大农产品板块（DCE 农产品全品种）"
+    cross_factor_script: pipeline/cross_factors/农产品.py

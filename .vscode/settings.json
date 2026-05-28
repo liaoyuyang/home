@@ -1,0 +1,14 @@
+{
+    "python.defaultInterpreterPath": "/home/miniconda3/bin/python",
+    "python.terminal.activateEnvironment": true,
+    "jupyter.askForKernelRestart": false,
+    "python.analysis.autoImportCompletions": true,
+    "jupyter.kernels.trusted": [
+        "/home/miniconda3/bin/python"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/miniconda3/lib/python3.13/site-packages"
+    ],
+    "jupyter.kernels.default": "base",
+    "kimi.executablePath": "/root/.vscode-server/data/User/globalStorage/moonshot-ai.kimi-code/bin/kimi/kimi"
+}

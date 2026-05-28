@@ -1,0 +1,98 @@
+# DCE 农产品品种基础配置
+# 交易时间、合约乘数、最小变动价位等
+
+instruments:
+  A:
+    name: 豆一
+    exchange: dce
+    multiplier: 10
+    min_price_tick: 1
+    trade_hours:
+      - "09:00-11:30"
+      - "13:30-15:00"
+      - "21:00-23:00"
+    night_trading: true
+    commission_rate: 0.0001
+
+  B:
+    name: 豆二
+    exchange: dce
+    multiplier: 10
+    min_price_tick: 1
+    trade_hours:
+      - "09:00-11:30"
+      - "13:30-15:00"
+      - "21:00-23:00"
+    night_trading: true
+    commission_rate: 0.0001
+
+  C:
+    name: 玉米
+    exchange: dce
+    multiplier: 10
+    min_price_tick: 1
+    trade_hours:
+      - "09:00-11:30"
+      - "13:30-15:00"
+      - "21:00-23:00"
+    night_trading: true
+    commission_rate: 0.0001
+
+  CS:
+    name: 玉米淀粉
+    exchange: dce
+    multiplier: 10
+    min_price_tick: 1
+    trade_hours:
+      - "09:00-11:30"
+      - "13:30-15:00"
+      - "21:00-23:00"
+    night_trading: true
+    commission_rate: 0.0001
+
+  M:
+    name: 豆粕
+    exchange: dce
+    multiplier: 10
+    min_price_tick: 1
+    trade_hours:
+      - "09:00-11:30"
+      - "13:30-15:00"
+      - "21:00-23:00"
+    night_trading: true
+    commission_rate: 0.0001
+
+  Y:
+    name: 豆油
+    exchange: dce
+    multiplier: 10
+    min_price_tick: 2
+    trade_hours:
+      - "09:00-11:30"
+      - "13:30-15:00"
+      - "21:00-23:00"
+    night_trading: true
+    commission_rate: 0.0001
+
+  P:
+    name: 棕榈油
+    exchange: dce
+    multiplier: 10
+    min_price_tick: 2
+    trade_hours:
+      - "09:00-11:30"
+      - "13:30-15:00"
+      - "21:00-23:00"
+    night_trading: true
+    commission_rate: 0.0001
+
+  LH:
+    name: 生猪
+    exchange: dce
+    multiplier: 16
+    min_price_tick: 5
+    trade_hours:
+      - "09:00-11:30"
+      - "13:30-15:00"
+    night_trading: false
+    commission_rate: 0.0001

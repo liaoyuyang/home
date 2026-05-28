@@ -1,0 +1,1061 @@
+instruments:
+  IC:
+    symbol: IC
+    contract_multiplier: 200
+    price_tick: 0.2
+    margin_rate: 0.12
+    fee: 2.3e-05
+    fee_way: rate
+    fee_comment: 锁仓
+    trading_hours:
+    - 09:30-11:30
+    - 13:00-15:00
+    light: 1
+    night: 0
+    exchange: cffex
+  IM:
+    symbol: IM
+    contract_multiplier: 200
+    price_tick: 0.2
+    margin_rate: 0.12
+    fee: 2.3e-05
+    fee_way: rate
+    fee_comment: 锁仓
+    trading_hours:
+    - 09:30-11:30
+    - 13:00-15:00
+    light: 1
+    night: 0
+    exchange: cffex
+  IF:
+    symbol: IF
+    contract_multiplier: 300
+    price_tick: 0.2
+    margin_rate: 0.12
+    fee: 2.3e-05
+    fee_way: rate
+    fee_comment: 锁仓
+    trading_hours:
+    - 09:30-11:30
+    - 13:00-15:00
+    light: 1
+    night: 0
+    exchange: cffex
+  IH:
+    symbol: IH
+    contract_multiplier: 300
+    price_tick: 0.2
+    margin_rate: 0.12
+    fee: 2.3e-05
+    fee_way: rate
+    fee_comment: 锁仓
+    trading_hours:
+    - 09:30-11:30
+    - 13:00-15:00
+    light: 1
+    night: 0
+    exchange: cffex
+  P:
+    symbol: P
+    contract_multiplier: 10
+    price_tick: 2
+    margin_rate: 0.08
+    fee: 2.5
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 棕榈油
+    bars_per_day: 345
+  A:
+    symbol: A
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.07
+    fee: 2
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 豆一
+    bars_per_day: 345
+  B:
+    symbol: B
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.07
+    fee: 1
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 豆二
+    bars_per_day: 345
+  M:
+    symbol: M
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.07
+    fee: 1.5
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 豆粕
+    bars_per_day: 345
+  Y:
+    symbol: Y
+    contract_multiplier: 10
+    price_tick: 2
+    margin_rate: 0.07
+    fee: 2.5
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 豆油
+    bars_per_day: 345
+  RS:
+    symbol: RS
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.2
+    fee: 2
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    light: 1
+    night: 0
+    exchange: czce
+    name: 菜籽
+  OI:
+    symbol: OI
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.09
+    fee: 2
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: czce
+    name: 菜籽油
+  RM:
+    symbol: RM
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.1
+    fee: 1.5
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: czce
+    name: 菜粕
+  PK:
+    symbol: PK
+    contract_multiplier: 5
+    price_tick: 2
+    margin_rate: 0.08
+    fee: 4
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    light: 1
+    night: 0
+    exchange: czce
+    name: 花生
+  SA:
+    symbol: SA
+    contract_multiplier: 20
+    price_tick: 1
+    margin_rate: 0.09
+    fee: 0.0002
+    fee_way: rate
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: czce
+    name: 纯碱
+  RU:
+    symbol: RU
+    contract_multiplier: 10
+    price_tick: 5
+    margin_rate: 0.1
+    fee: 0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 天然橡胶
+  BR:
+    symbol: BR
+    contract_multiplier: 10
+    price_tick: 5
+    margin_rate: 0.11
+    fee: 0.0002
+    fee_way: rate
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 合成橡胶
+  NR:
+    symbol: NR
+    contract_multiplier: 10
+    price_tick: 5
+    margin_rate: 0.11
+    fee: 0.0002
+    fee_way: rate
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 20号胶
+  L:
+    symbol: L
+    contract_multiplier: 5
+    price_tick: 1
+    margin_rate: 0.07
+    fee: 1
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 塑料
+  TA:
+    symbol: TA
+    contract_multiplier: 5
+    price_tick: 2
+    margin_rate: 0.07
+    fee: 0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: czce
+    name: PTA
+  PF:
+    symbol: PF
+    contract_multiplier: 5
+    price_tick: 2
+    margin_rate: 0.07
+    fee: 0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: czce
+    name: 短纤
+  V:
+    symbol: V
+    contract_multiplier: 5
+    price_tick: 1
+    margin_rate: 0.07
+    fee: 1
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: PVC
+  EG:
+    symbol: EG
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.07
+    fee: 3
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 乙二醇
+  MA:
+    symbol: MA
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.08
+    fee: 0.0001
+    fee_way: rate
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: czce
+    name: 甲醇
+  PP:
+    symbol: PP
+    contract_multiplier: 5
+    price_tick: 1
+    margin_rate: 0.07
+    fee: 1
+    fee_way: rate
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 聚丙烯
+  EB:
+    symbol: EB
+    contract_multiplier: 5
+    price_tick: 1
+    margin_rate: 0.07
+    fee: 3
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 苯乙烯
+  UR:
+    symbol: UR
+    contract_multiplier: 20
+    price_tick: 1
+    margin_rate: 0.08
+    fee: 0.0001
+    fee_way: rate
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    light: 1
+    night: 0
+    exchange: czce
+    name: 尿素
+  SH:
+    symbol: SH
+    contract_multiplier: 30
+    price_tick: 1
+    margin_rate: 0.08
+    fee: 0
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: czce
+    name: 烧碱
+  PX:
+    symbol: PX
+    contract_multiplier: 5
+    price_tick: 2
+    margin_rate: 0.08
+    fee: 0
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: czce
+    name: 对二甲苯
+  PR:
+    symbol: PR
+    contract_multiplier: 15
+    price_tick: 2
+    margin_rate: 0.07
+    fee: 0
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: czce
+    name: 瓶片
+  RB:
+    symbol: RB
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.07
+    fee: 0.0001
+    fee_way: rate
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 螺纹钢
+  I:
+    symbol: I
+    contract_multiplier: 100
+    price_tick: 0.5
+    margin_rate: 0.11
+    fee: 0.0001
+    fee_way: rate
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 铁矿石
+  HC:
+    symbol: HC
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.07
+    fee: 0.0001
+    fee_way: rate
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 热轧卷板
+  WR:
+    symbol: WR
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.1
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    light: 1
+    night: 0
+    exchange: shfe
+    name: 线材
+  SF:
+    symbol: SF
+    contract_multiplier: 5
+    price_tick: 2
+    margin_rate: 0.08
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    light: 1
+    night: 0
+    exchange: czce
+    name: 硅铁
+  SM:
+    symbol: SM
+    contract_multiplier: 5
+    price_tick: 2
+    margin_rate: 0.09
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    light: 1
+    night: 0
+    exchange: czce
+    name: 锰硅
+  SS:
+    symbol: SS
+    contract_multiplier: 5
+    price_tick: 5
+    margin_rate: 0.07
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-01:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 不锈钢
+  AU:
+    symbol: AU
+    contract_multiplier: 1000
+    price_tick: 0.02
+    margin_rate: 0.14
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-02:30
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 黄金
+  AG:
+    symbol: AG
+    contract_multiplier: 15
+    price_tick: 1
+    margin_rate: 0.14
+    fee: 0.0005
+    fee_way: rate
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-02:30
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 白银
+  NI:
+    symbol: NI
+    contract_multiplier: 1
+    price_tick: 10
+    margin_rate: 0.12
+    fee: 3
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-01:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 镍
+  SN:
+    symbol: SN
+    contract_multiplier: 1
+    price_tick: 10
+    margin_rate: 0.12
+    fee: 3
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-01:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 锡
+  ZN:
+    symbol: ZN
+    contract_multiplier: 5
+    price_tick: 5
+    margin_rate: 0.09
+    fee: 0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-01:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 锌
+  PB:
+    symbol: PB
+    contract_multiplier: 5
+    price_tick: 5
+    margin_rate: 0.09
+    fee: 0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-01:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 铅
+  AL:
+    symbol: AL
+    contract_multiplier: 5
+    price_tick: 5
+    margin_rate: 0.09
+    fee: 3
+    fee_way: number
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-01:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 铝
+  CU:
+    symbol: CU
+    contract_multiplier: 5
+    price_tick: 10
+    margin_rate: 0.09
+    fee: 5.0e-05
+    fee_way: number
+    fee_comment: 锁仓
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-01:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 铜
+  AO:
+    symbol: AO
+    contract_multiplier: 20
+    price_tick: 1
+    margin_rate: 0.11
+    fee: 0.0001
+    fee_way: rate
+    fee_comment: 无
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-01:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 氧化铝
+  BC:
+    symbol: BC
+    contract_multiplier: 5
+    price_tick: 10
+    margin_rate: 0.1
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-01:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 国际铜
+  SI:
+    symbol: SI
+    contract_multiplier: 5
+    price_tick: 5
+    margin_rate: 0.1
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    light: 1
+    night: 0
+    exchange: gfex
+    name: 工业硅
+  LC:
+    symbol: LC
+    contract_multiplier: 1
+    price_tick: 20
+    margin_rate: 0.1
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    light: 1
+    night: 0
+    exchange: gfex
+    name: 碳酸锂
+  C:
+    symbol: C
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.07
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 玉米
+    bars_per_day: 345
+  CS:
+    symbol: CS
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.06
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 玉米淀粉
+    bars_per_day: 345
+  RR:
+    symbol: RR
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.06
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 梗米
+  JD:
+    symbol: JD
+    contract_multiplier: 5
+    price_tick: 1
+    margin_rate: 0.07
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    light: 1
+    night: 0
+    exchange: dce
+    name: 鸡蛋
+  LH:
+    symbol: LH
+    contract_multiplier: 16
+    price_tick: 5
+    margin_rate: 0.08
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    light: 1
+    night: 0
+    exchange: dce
+    name: 生猪
+    bars_per_day: 225
+  AP:
+    symbol: AP
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.15
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    light: 1
+    night: 0
+    exchange: czce
+    name: 苹果
+  CJ:
+    symbol: CJ
+    contract_multiplier: 5
+    price_tick: 5
+    margin_rate: 0.1
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    light: 1
+    night: 0
+    exchange: czce
+    name: 红枣
+  SR:
+    symbol: SR
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.06
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: czce
+    name: 白砂糖
+  CF:
+    symbol: CF
+    contract_multiplier: 5
+    price_tick: 5
+    margin_rate: 0.07
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: czce
+    name: 棉花
+  CY:
+    symbol: CY
+    contract_multiplier: 5
+    price_tick: 5
+    margin_rate: 0.05
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: czce
+    name: 棉纱
+  J:
+    symbol: J
+    contract_multiplier: 100
+    price_tick: 0.5
+    margin_rate: 0.2
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 焦炭
+  JM:
+    symbol: JM
+    contract_multiplier: 60
+    price_tick: 0.5
+    margin_rate: 0.12
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 焦煤
+  FG:
+    symbol: FG
+    contract_multiplier: 20
+    price_tick: 1
+    margin_rate: 0.1
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: czce
+    name: 玻璃
+  SC:
+    symbol: SC
+    contract_multiplier: 1000
+    price_tick: 0.1
+    margin_rate: 0.2
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-02:30
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 中质含硫原油
+  LU:
+    symbol: LU
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.22
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 低硫燃料油
+  FU:
+    symbol: FU
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.22
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 燃料油
+  BU:
+    symbol: BU
+    contract_multiplier: 10
+    price_tick: 1
+    margin_rate: 0.14
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 沥青
+  SP:
+    symbol: SP
+    contract_multiplier: 10
+    price_tick: 2
+    margin_rate: 0.09
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: shfe
+    name: 纸浆
+  PG:
+    symbol: PG
+    contract_multiplier: 20
+    price_tick: 1
+    margin_rate: 0.16
+    fee: 0.0
+    fee_way: number
+    fee_comment: 平今
+    trading_hours:
+    - 09:00-11:30
+    - 13:30-15:00
+    - 21:00-23:00
+    light: 1
+    night: 1
+    exchange: dce
+    name: 液化石油气

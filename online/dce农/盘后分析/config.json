@@ -1,0 +1,18 @@
+{
+    "symbols": ["A", "B", "C", "CS", "M", "Y", "P", "LH"],
+    "data_paths": {
+        "save_files_root": "/home/online/dce农/save_files",
+        "tick_data_root": "/mnt/Data/future/decode_csv_dce",
+        "main_data_path": "/mnt/Data/writable/liaoyuyang/data/1min/active"
+    },
+    "symbol_specs": {
+        "A": {"name": "豆一", "multiplier": 10, "commission_rate": 0.0001, "min_price_tick": 1, "night_trading": true},
+        "B": {"name": "豆二", "multiplier": 10, "commission_rate": 0.0001, "min_price_tick": 1, "night_trading": true},
+        "C": {"name": "玉米", "multiplier": 10, "commission_rate": 0.0001, "min_price_tick": 1, "night_trading": true},
+        "CS": {"name": "玉米淀粉", "multiplier": 10, "commission_rate": 0.0001, "min_price_tick": 1, "night_trading": true},
+        "M": {"name": "豆粕", "multiplier": 10, "commission_rate": 0.0001, "min_price_tick": 1, "night_trading": true},
+        "Y": {"name": "豆油", "multiplier": 10, "commission_rate": 0.0001, "min_price_tick": 2, "night_trading": true},
+        "P": {"name": "棕榈油", "multiplier": 10, "commission_rate": 0.0001, "min_price_tick": 2, "night_trading": true},
+        "LH": {"name": "生猪", "multiplier": 16, "commission_rate": 0.0002, "min_price_tick": 5, "night_trading": false}
+    }
+}

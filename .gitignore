@@ -1,0 +1,46 @@
+# === System & Environment ===
+core.14036
+miniconda3/
+
+# === Python ===
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# === Data Files ===
+*.csv
+*.db
+*.db-wal
+*.db-shm
+*.feather
+*.parquet
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.npy
+*.npz
+
+# === Logs ===
+*.log
+logs/
+
+# === Runtime Data & Cache ===
+data/
+files/
+save_files/
+history_save_files/
+factor_cache/
+old_models/
+old_save/
+check_data/
+tick_data.db*
+
+# === Large Result Directories ===
+strategy_res/multi_train/
+strategy_res/single/
+realtime_eval/PAMY/
+strategy_to_load/PAMY_dce/files/
+strategy_online/strategy_PAMY_dce/files/
+future_commodity/prepare_data/

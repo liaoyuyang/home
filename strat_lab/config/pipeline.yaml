@@ -1,0 +1,65 @@
+# 流程默认参数
+
+# 训练相关
+training:
+  train_end_date: "2025-01-01"
+  train_label: 5                      # rtn_5：预测未来 5 分钟收益
+  n_splits: 5                         # KFold 折数
+  category_col:
+    - hour
+
+  # LightGBM 默认参数
+  lgb_params:
+    objective: regression
+    metric: rmse
+    boosting_type: gbdt
+    learning_rate: 0.005
+    num_leaves: 32
+    max_depth: 5
+    min_data_in_leaf: 500
+    lambda_l1: 1
+    lambda_l2: 1
+    feature_fraction: 0.7
+    bagging_freq: 10
+    extra_trees: true
+    max_bin: 32
+    verbose: -1
+    seed: 142
+    num_threads: 20
+    deterministic: true
+
+  # 早停参数
+  early_stopping:
+    num_boost_round: 10000
+    stopping_rounds: 500
+    min_delta: 5.0e-7
+
+# 回测相关
+backtest:
+  th1: 0.9
+  th2: 0.5
+  holding_period: 10                  # 最大持仓分钟数
+  open_drop: true                     # 开盘前 10 分钟强制空仓
+  close_drop: true                    # 收盘前 10 分钟强制空仓
+  warmup: 100                         # 滚动分位数 warm-up 长度
+  day: 1725                           # 5 * 345，滚动窗口天数换算为分钟数（硬编码，后续需改进）
+  date_max_trade: 100                 # 每日最大开仓次数
+  fee: 0
+  money: 82530
+
+# 因子筛选默认值
+factor_filter:
+  info_select:
+    nan_rate: 0.8
+    mode_rate: 0.9
+  importance_select_by_group:
+    cut_num_1: 300      # 有向因子截断数
+    cut_num_2: 200      # 无向因子截断数
+    same_name_cut: 5    # 同名前缀保留上限
+  corr_select:
+    feature_num_limit: 300
+    corr_limit: 0.9
+  sp_select:
+    th: 0
+  day_cut:
+    num_limit: 2

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "model": "minimax-direct/MiniMax-M2.7",
+  "small_model": "minimax-direct/MiniMax-M2.7",
+  "provider": {
+    "minimax-direct": {
+      "options": {
+        "apiKey": "sk-cp-OiajqgqGwVzPFdFH7djPLZxuet1h5zdU1BslqaYVKoKeU5rOMDwIL0uao7pQPSJ7pXDV3OwS-G0AKC8bZjbnN3F-5orQSCStZn5wVIOJxsoVR5P8cwlKjVY",
+        "baseURL": "https://api.minimaxi.com/v1"
+      }
+    }
+  }
+}

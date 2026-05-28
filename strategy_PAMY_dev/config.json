@@ -1,0 +1,181 @@
+{
+    "symbols": ["A", "B", "C", "CS", "M", "Y", "P", "LH"],
+    "active_symbols": ["A", "B", "C", "CS", "M", "Y", "P", "LH"],
+    "instruments": {
+        "A": {"contract": "a2605", "last_trade_date": "2026-06-11"},
+        "B": {"contract": "b2605", "last_trade_date": "2026-04-01"},
+        "C": {"contract": "c2605", "last_trade_date": "2026-04-01"},
+        "CS": {"contract": "cs2605", "last_trade_date": "2026-04-01"},
+        "M": {"contract": "m2605", "last_trade_date": "2026-03-28"},
+        "Y": {"contract": "y2605", "last_trade_date": "2026-04-08"},
+        "P": {"contract": "p2605", "last_trade_date": "2026-04-01"},
+        "LH": {"contract": "lh2605", "last_trade_date": "2026-04-01"}
+    },
+    "symbol_specs": {
+        "A": {
+            "name": "豆一",
+            "exchange": "dce",
+            "multiplier": 10,
+            "commission_rate": 0.0001,
+            "min_price_tick": 1,
+            "trade_hours": [
+                "09:00-11:30",
+                "13:30-15:00",
+                "21:00-23:00"
+            ],
+            "night_trading": true
+        },
+        "B": {
+            "name": "豆二",
+            "exchange": "dce",
+            "multiplier": 10,
+            "commission_rate": 0.0001,
+            "min_price_tick": 1,
+            "trade_hours": [
+                "09:00-11:30",
+                "13:30-15:00",
+                "21:00-23:00"
+            ],
+            "night_trading": true
+        },
+        "C": {
+            "name": "玉米",
+            "exchange": "dce",
+            "multiplier": 10,
+            "commission_rate": 0.0001,
+            "min_price_tick": 1,
+            "trade_hours": [
+                "09:00-11:30",
+                "13:30-15:00",
+                "21:00-23:00"
+            ],
+            "night_trading": true
+        },
+        "CS": {
+            "name": "玉米淀粉",
+            "exchange": "dce",
+            "multiplier": 10,
+            "commission_rate": 0.0001,
+            "min_price_tick": 1,
+            "trade_hours": [
+                "09:00-11:30",
+                "13:30-15:00",
+                "21:00-23:00"
+            ],
+            "night_trading": true
+        },
+        "M": {
+            "name": "豆粕",
+            "exchange": "dce",
+            "multiplier": 10,
+            "commission_rate": 0.0001,
+            "min_price_tick": 1,
+            "trade_hours": [
+                "09:00-11:30",
+                "13:30-15:00",
+                "21:00-23:00"
+            ],
+            "night_trading": true
+        },
+        "Y": {
+            "name": "豆油",
+            "exchange": "dce",
+            "multiplier": 10,
+            "commission_rate": 0.0001,
+            "min_price_tick": 2,
+            "trade_hours": [
+                "09:00-11:30",
+                "13:30-15:00",
+                "21:00-23:00"
+            ],
+            "night_trading": true
+        },
+        "P": {
+            "name": "棕榈油",
+            "exchange": "dce",
+            "multiplier": 10,
+            "commission_rate": 0.0001,
+            "min_price_tick": 2,
+            "trade_hours": [
+                "09:00-11:30",
+                "13:30-15:00",
+                "21:00-23:00"
+            ],
+            "night_trading": true
+        },
+        "LH": {
+            "name": "生猪",
+            "exchange": "dce",
+            "multiplier": 16,
+            "commission_rate": 0.0001,
+            "min_price_tick": 5,
+            "trade_hours": [
+                "09:00-11:30",
+                "13:30-15:00"
+            ],
+            "night_trading": false
+        }
+    },
+    "data_sources": {
+        "tick_data_root": "/mnt/Data/future",
+        "decode_csv_prefix": "decode_csv_"
+    },
+    "zmq": {
+        "host": "172.17.0.7",
+        "port": 7779
+    },
+    "paths": {
+        "db_path": "/home/strategy_PAMY_dev",
+        "load_recent_data_path": "/home/strategy_PAMY_dev/files",
+        "models_root": "/home/strategy_PAMY_dev/models",
+        "save_files_root": "/home/strategy_PAMY_dev/save_files"
+    },
+    "model_config": {
+        "A": {"port": 44226},
+        "B": {"port": 44229},
+        "C": {"port": 44230},
+        "CS": {"port": 44231},
+        "M": {"port": 44227},
+        "Y": {"port": 44228},
+        "P": {"port": 44225},
+        "LH": {"port": 44232}
+    },
+    "trading_params": {
+        "th1": 0.9,
+        "th2": 0.5,
+        "holding_period_max": 10
+    },
+    "time_config": {
+        "comment": "交易时间配置，所有时间格式为HH:MM",
+        "day_session": {
+            "start_time": "09:00:00.001",
+            "end_time": "15:00:00",
+            "no_trade_start": "09:00:00.001",
+            "no_trade_end": "09:10",
+            "no_trade_start2": "14:50",
+            "no_trade_end2": "15:00"
+        },
+        "night_session": {
+            "enabled": true,
+            "start_time": "21:00",
+            "end_time": "23:00",
+            "no_trade_start": "21:00",
+            "no_trade_end": "21:10",
+            "no_trade_start2": "22:50",
+            "no_trade_end2": "23:00"
+        },
+        "bar_in_day": 345
+    },
+    "calculation_params": {
+        "recent_days": 30,
+        "tick_cache_days": 5,
+        "cache_keep_days": 5,
+        "parallel_jobs": 10,
+        "start_date": "2025-01-01"
+    },
+    "replay_mode": {
+        "enabled": true,
+        "day_date": "2026-03-24",
+        "night_date": "2026-03-23"
+    }
+}

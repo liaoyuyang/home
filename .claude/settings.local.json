@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 check_factor_cache.py)",
+      "Bash(ls -la /mnt/Data/writable/liaoyuyang/factor/ 2>/dev/null | head -20)",
+      "Read(//mnt/Data/writable/liaoyuyang/factor/**)"
+    ]
+  }
+}

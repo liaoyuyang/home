@@ -1,0 +1,831 @@
+"""
+盘中交易监控 + Web 面板
+============================
+独立进程，不和主策略耦合。
+每 5 秒扫描主程序保存的 json status / min 文件，
+通过 now_pos 变化推断信号，并按"延迟一分钟"规则计算成交价。
+
+启动:
+    python monitor_web.py
+
+访问:
+    http://localhost:5000
+"""
+
+import os
+import sys
+import json
+import time
+import glob
+import atexit
+import shutil
+import threading
+import webbrowser
+from datetime import timezone, timedelta, datetime
+from typing import Dict, List, Optional
+import pandas as pd
+from flask import Flask, render_template_string, request
+
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+app = Flask(__name__)
+
+# 全局状态（监控线程写入，Flask 读取）
+MONITOR_STATE = {
+    'positions': {},
+    'pending_opens': {},
+    'pending_closes': {},
+    'trades': {},
+    'latest_signals': {},
+    'last_update': '-',
+}
+
+SYMBOLS: List[str] = []
+
+
+def _load_kline(symbol: str, save_root: str) -> list:
+    """读取当日完整行情（含前一夜盘），剔除异常 bar"""
+    data_dir = os.path.join(save_root, 'data')
+    now = datetime.now(BEIJING_TZ)
+    date_str = now.strftime('%Y-%m-%d')
+    yesterday = (now - timedelta(days=1)).strftime('%Y-%m-%d')
+
+    raw_rows = []
+    for d in [yesterday, date_str]:
+        pattern = os.path.join(data_dir, f'{symbol}_min_{d}_*.csv')
+        for fpath in sorted(glob.glob(pattern)):
+            basename = os.path.basename(fpath)
+            time_part = basename.replace(f'{symbol}_min_{d}_', '').replace('.csv', '')
+            try:
+                hour = int(time_part.split('-')[0])
+            except ValueError:
+                continue
+            if d == yesterday and hour < 21:
+                continue
+
+            try:
+                df = pd.read_csv(fpath)
+                if df.empty:
+                    continue
+                row = df.iloc[0]
+                o = float(row.get('open', 0))
+                h = float(row.get('high', 0))
+                l = float(row.get('low', 0))
+                c = float(row.get('close', 0))
+                if o <= 0 or h <= 0 or l <= 0 or c <= 0:
+                    continue
+                dt_str = str(row.get('datetime', ''))
+                raw_rows.append({
+                    'time': dt_str,
+                    'time_key': dt_str.replace(' ', '_').replace(':', '-'),
+                    'open': o, 'high': h, 'low': l, 'close': c,
+                    'avg_price': float(row.get('avg_price_from_5s', c)),
+                })
+            except Exception:
+                pass
+
+    # MAD 异常值过滤
+    if len(raw_rows) >= 3:
+        closes = pd.Series([r['close'] for r in raw_rows])
+        med = closes.median()
+        mad = (closes - med).abs().median()
+        threshold = max(10, 5 * mad)
+        rows = []
+        for r in raw_rows:
+            if (abs(r['open'] - med) > threshold or
+                abs(r['high'] - med) > threshold or
+                abs(r['low'] - med) > threshold or
+                abs(r['close'] - med) > threshold):
+                continue
+            rows.append(r)
+    else:
+        rows = raw_rows
+
+    return rows
+
+
+def _calc_holding(open_str: str, close_str: str) -> str:
+    """计算持仓时间（纯数字分钟）"""
+    try:
+        dt_open = datetime.strptime(open_str, "%Y-%m-%d_%H-%M-%S")
+        dt_close = datetime.strptime(close_str, "%Y-%m-%d_%H-%M-%S")
+        minutes = int((dt_close - dt_open).total_seconds() / 60)
+        return str(minutes)
+    except Exception:
+        return "-"
+
+
+def _fmt_time(ts_str: str) -> str:
+    """2026-05-18_21-12-00 -> 21:12:00"""
+    try:
+        return ts_str.split('_')[1].replace('-', ':')
+    except Exception:
+        return ts_str
+
+
+def _build_url(**kwargs) -> str:
+    """基于当前 query string 构建新 URL，保留现有参数并覆盖指定参数"""
+    args = request.args.copy()
+    for k, v in kwargs.items():
+        if v is None or v == '':
+            args.pop(k, None)
+        else:
+            args[k] = v
+    if not args:
+        return '/'
+    return '?' + '&'.join(f'{k}={v}' for k, v in args.items())
+
+
+class TradeMonitor:
+    def __init__(self, save_root: str, symbols: list, clear_on_start: bool = True):
+        self.save_root = save_root
+        self.symbols = symbols
+        self.data_dir = os.path.join(save_root, 'data')
+        self.monitor_dir = os.path.join(save_root, '盘中分析')
+        os.makedirs(self.monitor_dir, exist_ok=True)
+
+        if clear_on_start:
+            self._clear_monitor_history()
+
+        self.positions: Dict[str, dict] = {}
+        self.pending_opens: Dict[str, dict] = {}
+        self.pending_closes: Dict[str, dict] = {}
+        self.trades: Dict[str, list] = {}
+        self.latest_signals: Dict[str, str] = {}
+        self.last_pos: Dict[str, int] = {}
+        self.processed: Dict[str, set] = {sym: set() for sym in symbols}
+
+        for sym in symbols:
+            self.trades[sym] = []
+
+    def _clear_monitor_history(self):
+        try:
+            for fpath in glob.glob(os.path.join(self.monitor_dir, '*_trades_*.json')):
+                os.remove(fpath)
+                print(f"[Monitor] 清理旧文件: {os.path.basename(fpath)}")
+        except Exception as e:
+            print(f"[Monitor] 清理历史文件失败: {e}")
+
+    def clear_all(self):
+        self._clear_monitor_history()
+        self.positions.clear()
+        self.pending_opens.clear()
+        self.pending_closes.clear()
+        self.latest_signals.clear()
+        self.last_pos.clear()
+        for sym in self.symbols:
+            self.trades[sym].clear()
+            self.processed[sym].clear()
+
+    def _read_pos(self, symbol: str, minute_str: str) -> Optional[int]:
+        json_dir = os.path.join(self.save_root, symbol, 'json')
+        fpath = os.path.join(json_dir, f'trading_status_{minute_str}.json')
+        if not os.path.exists(fpath):
+            return None
+        try:
+            with open(fpath, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            if 'now_pos' in data:
+                return int(data['now_pos'])
+        except Exception:
+            pass
+        return None
+
+    def _read_avg_price(self, symbol: str, minute_str: str) -> Optional[float]:
+        fpath = os.path.join(self.data_dir, f'{symbol}_min_{minute_str}.csv')
+        if not os.path.exists(fpath):
+            return None
+        try:
+            df = pd.read_csv(fpath)
+            if 'avg_price_from_5s' in df.columns and not df.empty:
+                return float(df['avg_price_from_5s'].iloc[0])
+        except Exception:
+            pass
+        return None
+
+    def _infer_signal(self, prev_pos: int, curr_pos: int) -> str:
+        if prev_pos == 0 and curr_pos == 1:
+            return '开多'
+        if prev_pos == 0 and curr_pos == -1:
+            return '开空'
+        if prev_pos == 1 and curr_pos == 0:
+            return '平多'
+        if prev_pos == -1 and curr_pos == 0:
+            return '平空'
+        if prev_pos == 1 and curr_pos == -1:
+            return '平多开空'
+        if prev_pos == -1 and curr_pos == 1:
+            return '平空开多'
+        if curr_pos == 1:
+            return '持多'
+        if curr_pos == -1:
+            return '持空'
+        return '等待行情'
+
+    def _process_symbol(self, symbol: str, minute_str: str):
+        if symbol in self.pending_closes and symbol in self.positions:
+            price = self._read_avg_price(symbol, minute_str)
+            if price is not None:
+                pos = self.positions[symbol]
+                trade = (pos['open_time'], minute_str, pos['direction'], pos['open_price'], round(price, 2))
+                self.trades[symbol].append(trade)
+                print(f"[Monitor][{symbol}] 平仓完成: {trade}")
+                del self.positions[symbol]
+                del self.pending_closes[symbol]
+                self._save_trades(symbol)
+
+        if symbol in self.pending_opens:
+            price = self._read_avg_price(symbol, minute_str)
+            if price is not None:
+                self.positions[symbol] = {
+                    'direction': self.pending_opens[symbol]['direction'],
+                    'open_time': minute_str,
+                    'open_price': round(price, 2)
+                }
+                print(f"[Monitor][{symbol}] 开仓完成: 时间={minute_str}, 方向={self.pending_opens[symbol]['direction']}, 价格={round(price, 2)}")
+                del self.pending_opens[symbol]
+                self._save_trades(symbol)
+
+        curr_pos = self._read_pos(symbol, minute_str)
+        if curr_pos is None:
+            return
+
+        prev_pos = self.last_pos.get(symbol, 0)
+        signal = self._infer_signal(prev_pos, curr_pos)
+        self.latest_signals[symbol] = signal
+
+        open_direction = None
+        if signal in ('开多', '平空开多'):
+            open_direction = 1
+        elif signal in ('开空', '平多开空'):
+            open_direction = -1
+
+        close_signals = ('平多', '平空', '平多开空', '平空开多', '过长时间无合适信号，平仓')
+
+        if signal in close_signals and symbol in self.positions and symbol not in self.pending_closes:
+            self.pending_closes[symbol] = {'time': minute_str}
+            print(f"[Monitor][{symbol}] 标记待平仓: {minute_str} {signal}")
+
+        if open_direction is not None and symbol not in self.positions and symbol not in self.pending_opens:
+            self.pending_opens[symbol] = {'time': minute_str, 'direction': open_direction}
+            print(f"[Monitor][{symbol}] 标记待开仓: {minute_str} {signal}")
+
+        self.last_pos[symbol] = curr_pos
+
+    def _save_trades(self, symbol: str):
+        date_str = datetime.now(BEIJING_TZ).strftime('%Y%m%d')
+        fpath = os.path.join(self.monitor_dir, f'{symbol}_trades_{date_str}.json')
+        try:
+            with open(fpath, 'w', encoding='utf-8') as f:
+                json.dump(self.trades[symbol], f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"[Monitor][{symbol}] 保存失败: {e}")
+
+    def scan_once(self):
+        now = pd.Timestamp.now(tz=BEIJING_TZ)
+        current_minute = now.replace(second=0, microsecond=0)
+        minute_str = current_minute.strftime("%Y-%m-%d_%H-%M-00")
+        current_date = current_minute.strftime('%Y%m%d')
+
+        for symbol in self.symbols:
+            if self.processed[symbol]:
+                sample = next(iter(self.processed[symbol]))
+                if not sample.startswith(current_date):
+                    self.processed[symbol].clear()
+                    if symbol in self.last_pos:
+                        del self.last_pos[symbol]
+
+            if minute_str in self.processed[symbol]:
+                continue
+
+            json_file = os.path.join(self.save_root, symbol, 'json', f'trading_status_{minute_str}.json')
+            if os.path.exists(json_file):
+                self._process_symbol(symbol, minute_str)
+                self.processed[symbol].add(minute_str)
+
+        global MONITOR_STATE
+        MONITOR_STATE = {
+            'positions': {k: v.copy() for k, v in self.positions.items()},
+            'pending_opens': {k: v.copy() for k, v in self.pending_opens.items()},
+            'pending_closes': {k: v.copy() for k, v in self.pending_closes.items()},
+            'trades': {k: list(v) for k, v in self.trades.items()},
+            'latest_signals': self.latest_signals.copy(),
+            'last_update': now.strftime('%H:%M:%S'),
+        }
+
+    def run(self, poll_interval: float = 5.0):
+        print(f"[Monitor] 启动复盘 | 品种: {self.symbols}")
+        for symbol in self.symbols:
+            json_dir = os.path.join(self.save_root, symbol, 'json')
+            if not os.path.exists(json_dir):
+                continue
+            files = sorted(glob.glob(os.path.join(json_dir, 'trading_status_*.json')))
+            for fpath in files:
+                basename = os.path.basename(fpath)
+                minute_str = basename.replace('trading_status_', '').replace('.json', '')
+                self._process_symbol(symbol, minute_str)
+                self.processed[symbol].add(minute_str)
+            print(f"[Monitor][{symbol}] 复盘完成 | 已处理 {len(files)} 分钟 | 交易 {len(self.trades[symbol])} 笔")
+
+        print(f"[Monitor] 进入实时监控 | 扫描间隔 {poll_interval}s")
+        while True:
+            self.scan_once()
+            time.sleep(poll_interval)
+
+
+# ==============================================================================
+# HTML Template
+# ==============================================================================
+HTML_TEMPLATE = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>盘中交易监控</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            margin: 0; padding: 15px;
+            background: #f0f2f5;
+            color: #333;
+            height: 100vh;
+            overflow: hidden;
+        }
+        h1 { margin: 0 0 8px 0; font-size: 22px; }
+        .subtitle { color: #888; font-size: 12px; margin-bottom: 12px; }
+        .main-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            height: calc(100vh - 70px);
+        }
+        .top-row {
+            display: flex;
+            gap: 12px;
+            flex: 0 0 auto;
+            height: 390px;
+            min-height: 0;
+        }
+        .top-row > .card {
+            flex: 1.25;
+            overflow: hidden;
+        }
+        .top-row > .card:last-child {
+            flex: 0.75;
+        }
+        .bottom-row {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .card {
+            background: white; border-radius: 10px; padding: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+        }
+        .card h2 { margin: 0 0 10px 0; font-size: 15px; color: #555; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { padding: 5px 8px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #fafafa; font-weight: 600; color: #666; }
+        .long { color: #d32f2f; font-weight: bold; }
+        .short { color: #388e3c; font-weight: bold; }
+        .pending { color: #f57c00; font-weight: bold; }
+        .muted { color: #999; }
+        .right { text-align: right; }
+        .pnl-pos { color: #d32f2f; font-weight: bold; }
+        .pnl-neg { color: #388e3c; font-weight: bold; }
+        .sym-btns {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .sym-btns a {
+            display: inline-block;
+            padding: 4px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.15s;
+        }
+        .sym-btns a:hover { background: #f5f5f5; }
+        .sym-btns a.active {
+            background: #333;
+            color: white;
+            border-color: #333;
+        }
+        .scroll-table {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .kline-canvas {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <h1>盘中交易监控</h1>
+    <div class="subtitle">最后更新: {{ last_update }} | 自动刷新间隔: 10秒</div>
+
+    <div class="main-layout">
+        <!-- 第一排：品种状态 + 交易记录 -->
+        <div class="top-row">
+            <div class="card">
+                <h2>品种状态</h2>
+                <div class="scroll-table">
+                    <table>
+                        <tr>
+                            <th>品种</th>
+                            <th>最新信号</th>
+                            <th>持仓</th>
+                            <th>开仓时间</th>
+                            <th class="right">开仓价</th>
+                            <th>待处理</th>
+                            <th class="right">开仓次数</th>
+                            <th class="right">当日盈亏</th>
+                        </tr>
+                        {% for sym in symbols %}
+                        <tr>
+                            <td><b>{{ sym }}</b></td>
+                            <td>{{ signals.get(sym, '-') }}</td>
+                            <td>
+                                {% if positions.get(sym) %}
+                                    {% if positions[sym].direction == 1 %}
+                                        <span class="long">多仓</span>
+                                    {% else %}
+                                        <span class="short">空仓</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="muted">无持仓</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ positions.get(sym, {}).get('open_time', '-') }}</td>
+                            <td class="right">{{ positions.get(sym, {}).get('open_price', '-') }}</td>
+                            <td>
+                                {% if pending_opens.get(sym) %}
+                                    <span class="pending">待开仓({% if pending_opens[sym].direction == 1 %}多{% else %}空{% endif %})</span>
+                                {% elif pending_closes.get(sym) %}
+                                    <span class="pending">待平仓</span>
+                                {% else %}
+                                    <span class="muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="right">{{ open_counts.get(sym, 0) }}</td>
+                            <td class="right">
+                                {% set p = sym_pnl.get(sym, 0) %}
+                                {% if p > 0 %}
+                                    <span class="pnl-pos">+{{ "%.2f"|format(p) }}</span>
+                                {% elif p < 0 %}
+                                    <span class="pnl-neg">{{ "%.2f"|format(p) }}</span>
+                                {% else %}
+                                    <span class="muted">0.00</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h2 style="margin:0;">今日交易记录</h2>
+                    <div class="sym-btns" style="margin:0;">
+                        <a href="{{ build_url(trade_sym=None) }}" class="{% if trade_sym_filter == 'ALL' %}active{% endif %}">全部</a>
+                        {% for sym in symbols %}
+                        <a href="{{ build_url(trade_sym=sym) }}" class="{% if trade_sym_filter == sym %}active{% endif %}">{{ sym }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="scroll-table">
+                    <table>
+                        <tr>
+                            <th>品种</th>
+                            <th>方向</th>
+                            <th>开仓时间</th>
+                            <th class="right">开仓价</th>
+                            <th>平仓时间</th>
+                            <th class="right">平仓价</th>
+                            <th class="right">持仓</th>
+                            <th class="right">盈亏</th>
+                        </tr>
+                        {% for sym in symbols %}
+                            {% set sym_trades_list = filtered_trades.get(sym, []) %}
+                            {% if sym_trades_list %}
+                                {% for trade in sym_trades_list %}
+                                <tr>
+                                    <td>{{ sym }}</td>
+                                    <td>
+                                        {% if trade[2] == 1 %}
+                                            <span class="long">多</span>
+                                        {% else %}
+                                            <span class="short">空</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ trade[0] | fmt_time }}</td>
+                                    <td class="right">{{ "%.2f"|format(trade[3]) }}</td>
+                                    <td>{{ trade[1] | fmt_time }}</td>
+                                    <td class="right">{{ "%.2f"|format(trade[4]) }}</td>
+                                    <td class="right">{{ holding_times.get(sym, [])[loop.index0] }}</td>
+                                    <td class="right">
+                                        {% set pnl = trade[4] - trade[3] if trade[2] == 1 else trade[3] - trade[4] %}
+                                        {% if pnl > 0 %}
+                                            <span class="pnl-pos">+{{ "%.2f"|format(pnl) }}</span>
+                                        {% elif pnl < 0 %}
+                                            <span class="pnl-neg">{{ "%.2f"|format(pnl) }}</span>
+                                        {% else %}
+                                            <span class="muted">0.00</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                        {% set total_trades = namespace(count=0) %}
+                        {% for sym in symbols %}{% set total_trades.count = total_trades.count + filtered_trades.get(sym, [])|length %}{% endfor %}
+                        {% if total_trades.count == 0 %}
+                        <tr><td colspan="8" class="muted" style="text-align:center;">暂无交易</td></tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第二排：行情图独占 -->
+        <div class="card bottom-row">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="margin:0;">行情图 - {{ selected_sym }}</h2>
+                <div class="sym-btns" style="margin:0;">
+                    {% for sym in symbols %}
+                    <a href="{{ build_url(sym=sym) }}" class="{% if sym == selected_sym %}active{% endif %}">{{ sym }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <canvas id="klineCanvas" class="kline-canvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // 10 秒自动刷新，保留当前 URL 参数
+        setInterval(function() {
+            window.location.reload();
+        }, 10000);
+
+        (function() {
+            const klineData = {{ kline_data | safe }};
+            const trades = {{ sym_trades | safe }};
+            const canvas = document.getElementById('klineCanvas');
+            if (!canvas || klineData.length === 0) {
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    const rect = canvas.getBoundingClientRect();
+                    const dpr = window.devicePixelRatio || 1;
+                    canvas.width = Math.floor(rect.width * dpr);
+                    canvas.height = Math.floor(rect.height * dpr);
+                    ctx.scale(dpr, dpr);
+                    ctx.fillStyle = '#999';
+                    ctx.font = '14px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('暂无行情数据', rect.width / 2, rect.height / 2);
+                }
+                return;
+            }
+
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = Math.floor(rect.width * dpr);
+            canvas.height = Math.floor(rect.height * dpr);
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const W = rect.width;
+            const H = rect.height;
+            const pad = {top: 28, right: 60, bottom: 32, left: 60};
+            const chartW = W - pad.left - pad.right;
+            const chartH = H - pad.top - pad.bottom;
+
+            const prices = klineData.flatMap(d => [d.high, d.low]);
+            let minP = Math.min(...prices);
+            let maxP = Math.max(...prices);
+            const padP = (maxP - minP) * 0.05 || 1;
+            minP -= padP;
+            maxP += padP;
+            const rangeP = maxP - minP;
+
+            const n = klineData.length;
+            const gap = chartW / n;
+            const cw = Math.max(3, Math.round(gap * 0.55));
+
+            function y(p) { return Math.round(pad.top + (maxP - p) / rangeP * chartH); }
+            function x(i) { return Math.round(pad.left + i * gap + gap / 2); }
+
+            ctx.clearRect(0, 0, W, H);
+
+            // 网格 & Y轴
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 0.5;
+            ctx.fillStyle = '#666';
+            ctx.font = '13px sans-serif';
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) {
+                const py = Math.round(pad.top + chartH * i / 5);
+                ctx.beginPath();
+                ctx.moveTo(pad.left, py);
+                ctx.lineTo(W - pad.right, py);
+                ctx.stroke();
+                const price = maxP - rangeP * i / 5;
+                ctx.fillText(price.toFixed(1), pad.left - 6, py + 3);
+            }
+
+            // X轴标签
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillStyle = '#666';
+            const step = Math.max(1, Math.floor(n / 6));
+            for (let i = 0; i < n; i += step) {
+                const t = klineData[i].time;
+                const label = t ? t.split(' ')[1] || t : '';
+                ctx.fillText(label, x(i), H - 6);
+            }
+
+            // K线
+            klineData.forEach((d, i) => {
+                const cx = x(i);
+                const yO = y(d.open);
+                const yC = y(d.close);
+                const yH = y(d.high);
+                const yL = y(d.low);
+                const up = d.close >= d.open;
+                const color = up ? '#d32f2f' : '#388e3c';
+
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(cx, yH);
+                ctx.lineTo(cx, yL);
+                ctx.stroke();
+
+                ctx.fillStyle = color;
+                const top = Math.min(yO, yC);
+                const h = Math.max(1, Math.abs(yC - yO));
+                ctx.fillRect(cx - cw / 2, top, cw, h);
+            });
+
+            // 买卖点
+            trades.forEach(trade => {
+                const openKey = trade[0];
+                const closeKey = trade[1];
+                const dir = trade[2];
+                const openPrice = trade[3];
+                const closePrice = trade[4];
+
+                const oIdx = klineData.findIndex(d => d.time_key === openKey);
+                const cIdx = klineData.findIndex(d => d.time_key === closeKey);
+
+                if (oIdx >= 0) {
+                    const cx = x(oIdx);
+                    const cy = y(openPrice);
+                    ctx.fillStyle = dir === 1 ? '#d32f2f' : '#388e3c';
+                    ctx.beginPath();
+                    if (dir === 1) {
+                        const ay = cy + 14;
+                        ctx.moveTo(cx, ay - 8);
+                        ctx.lineTo(cx - 5, ay + 2);
+                        ctx.lineTo(cx + 5, ay + 2);
+                    } else {
+                        const ay = cy - 14;
+                        ctx.moveTo(cx, ay + 8);
+                        ctx.lineTo(cx - 5, ay - 2);
+                        ctx.lineTo(cx + 5, ay - 2);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                // 平仓标记：优先用 K 线数据中的 avg_price，确保和实际交易均价一致
+                let avgPrice = closePrice;
+                if (cIdx >= 0 && klineData[cIdx].avg_price) {
+                    avgPrice = klineData[cIdx].avg_price;
+                }
+                if (cIdx >= 0) {
+                    const cx = x(cIdx);
+                    const cy = y(avgPrice);
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2.5;
+                    const s = 7;
+                    ctx.beginPath();
+                    ctx.moveTo(cx - s, cy - s);
+                    ctx.lineTo(cx + s, cy + s);
+                    ctx.moveTo(cx + s, cy - s);
+                    ctx.lineTo(cx - s, cy + s);
+                    ctx.stroke();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
+'''
+
+
+@app.template_filter('fmt_time')
+def fmt_time_filter(ts_str):
+    return _fmt_time(ts_str)
+
+
+@app.route('/')
+def index():
+    state = MONITOR_STATE
+    save_root = app.config.get('SAVE_ROOT', '')
+    selected_sym = request.args.get('sym', SYMBOLS[0] if SYMBOLS else '')
+    trade_sym_filter = request.args.get('trade_sym', 'ALL')
+
+    kline_data = _load_kline(selected_sym, save_root) if selected_sym and save_root else []
+    sym_trades = state.get('trades', {}).get(selected_sym, [])
+
+    filtered_trades = {}
+    holding_times = {}
+    for sym in SYMBOLS:
+        sym_trades_list = state.get('trades', {}).get(sym, [])
+        if trade_sym_filter != 'ALL' and sym != trade_sym_filter:
+            filtered_trades[sym] = []
+            holding_times[sym] = []
+        else:
+            filtered_trades[sym] = sym_trades_list
+            holding_times[sym] = [_calc_holding(t[0], t[1]) for t in sym_trades_list]
+
+    sym_pnl = {}
+    open_counts = {}
+    for sym in SYMBOLS:
+        trades = state.get('trades', {}).get(sym, [])
+        total = sum(t[4] - t[3] if t[2] == 1 else t[3] - t[4] for t in trades)
+        sym_pnl[sym] = round(total, 2)
+        open_counts[sym] = len(trades)
+
+    return render_template_string(
+        HTML_TEMPLATE,
+        symbols=SYMBOLS,
+        selected_sym=selected_sym,
+        trade_sym_filter=trade_sym_filter,
+        kline_data=json.dumps(kline_data),
+        sym_trades=json.dumps(sym_trades),
+        last_update=state.get('last_update', '-'),
+        signals=state.get('latest_signals', {}),
+        positions=state.get('positions', {}),
+        pending_opens=state.get('pending_opens', {}),
+        pending_closes=state.get('pending_closes', {}),
+        filtered_trades=filtered_trades,
+        holding_times=holding_times,
+        sym_pnl=sym_pnl,
+        open_counts=open_counts,
+        build_url=_build_url,
+    )
+
+
+# ==============================================================================
+# 启动入口
+# ==============================================================================
+if __name__ == '__main__':
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+    with open(config_path, 'r', encoding='utf-8') as f:
+        config = json.load(f)
+
+    save_root = config['paths']['save_files_root']
+    SYMBOLS = config.get('symbols', [])
+    app.config['SAVE_ROOT'] = save_root
+
+    monitor = TradeMonitor(save_root, SYMBOLS, clear_on_start=True)
+    atexit.register(monitor.clear_all)
+
+    monitor_thread = threading.Thread(target=monitor.run, kwargs={'poll_interval': 5.0}, daemon=True)
+    monitor_thread.start()
+
+    host = '0.0.0.0'
+    port = 5000
+    url = f"http://127.0.0.1:{port}"
+    print(f"=" * 60)
+    print(f"[Monitor] Web 监控面板: {url}")
+    print(f"[Monitor] 按 Ctrl+C 停止")
+    print(f"=" * 60)
+
+    def open_browser():
+        time.sleep(1.5)
+        webbrowser.open_new_tab(url)
+        print(f"[Monitor] 已尝试打开浏览器: {url}")
+
+    threading.Thread(target=open_browser, daemon=True).start()
+    app.run(host=host, port=port, debug=False, use_reloader=False)
