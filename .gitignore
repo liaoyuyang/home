@@ -39,7 +39,12 @@ tick_data.db*
 
 # === Large Result Directories ===
 strategy_res/multi_train/
-strategy_res/single/
+
+# strategy_res/single/ 代码要保留，只忽略大文件/模型/回测结果
+strategy_res/single/**/model/
+strategy_res/single/**/backtest/
+strategy_res/single/**/eval_output/
+strategy_res/single/**/*.lgb
 realtime_eval/PAMY/
 strategy_to_load/PAMY_dce/files/
 strategy_online/strategy_PAMY_dce/files/
